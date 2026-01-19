@@ -3,7 +3,11 @@
 # pg_privileges
 🔐 pg_privileges — Función personalizada en PostgreSQL para consultar los permisos de usuarios sobre cualquier objetos. Permite revisar privilegios específicos o globales con facilidad, ideal para auditorías, administración y diagnóstico de roles en bases de datos.
 
+Scripts para ver los permisos y otorgar permisos en todas las base de datos 
+
 ```sql
+
+
 
 pg_privileges( p_database ) -> p_database options [all,local,especific]
 
@@ -11,6 +15,14 @@ pg_privileges( p_database ) -> p_database options [all,local,especific]
 
 pg_privileges( p_object_name, p_user_name , p_db_name, p_save_tmp_table = false ) --- retornara en formato TABLA 
 pg_privileges_acl( p_object_name, p_user_name , p_db_name, p_save_tmp_table = false ) --- Retornara solo los ACL 
+
+
+checar estos repositorios
+
+https://github.com/cybertec-postgresql/pg_permissions
+
+
+https://github.com/CR0NYM3X/POSTGRESQL/blob/main/scripts/Funcion%20an%C3%B3nima%20para%20otorgar%20permisos%20en%20todas%20las%20base%20de%20datos
 
 ```
 
