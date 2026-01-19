@@ -4,6 +4,9 @@
 🔐 pg_privileges — Función personalizada en PostgreSQL para consultar los permisos de usuarios sobre cualquier objetos. Permite revisar privilegios específicos o globales con facilidad, ideal para auditorías, administración y diagnóstico de roles en bases de datos.
 
 ```sql
+
+pg_privileges( p_database ) -> p_database options [all,local,especific]
+
 - te permitira consultar información de los privilegios de otras DB en local usando dblink y te permitira guardar los resultados en una tabla temporal 
 
 pg_privileges( p_object_name, p_user_name , p_db_name, p_save_tmp_table = false ) --- retornara en formato TABLA 
