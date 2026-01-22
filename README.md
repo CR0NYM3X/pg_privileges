@@ -21,8 +21,8 @@ checar estos repositorios
 
 https://github.com/cybertec-postgresql/pg_permissions
 
-
 https://github.com/CR0NYM3X/POSTGRESQL/blob/main/scripts/Funcion%20an%C3%B3nima%20para%20otorgar%20permisos%20en%20todas%20las%20base%20de%20datos
+
 
 ```
 
