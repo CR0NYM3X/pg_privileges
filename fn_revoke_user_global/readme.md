@@ -1,4 +1,84 @@
- ### 🛠 Batería de Pruebas: Stress-Test del Script de Seguridad
+
+# 🛡️ PostgreSQL Global Access & Revoke Security Suite
+
+Esta herramienta es un **motor de revocación granular y purga de identidades** para entornos PostgreSQL. Permite gestionar la salida de usuarios o cambios de permisos a nivel cluster, barriendo todas las bases de datos de forma automática mediante `dblink` y generando una auditoría detallada en tiempo real.
+
+## 🚀 Características Principales
+
+* **Ejecución Multi-DB:** Conecta automáticamente a todas las bases de datos del cluster (o a una lista específica) para limpiar privilegios.
+* **Granularidad Total:** No solo revoca el acceso a la DB; limpia esquemas, tablas, funciones, secuencias y elimina privilegios por defecto (Default Privileges).
+* **Validación Previa:** Filtra usuarios inexistentes antes de iniciar el proceso para optimizar recursos.
+* **Resiliencia (Fault Tolerance):** Si un comando falla (ej. un esquema no existe), el script captura la excepción, la loguea y **continúa** con el resto del proceso.
+* **Auditoría Detallada:** Genera una tabla temporal `audit_report` con el estatus de cada comando ejecutado, tiempos de inicio/fin y mensajes de error del motor.
+* **Niveles de Detalle:** Tres niveles de Verbosity (1: Resumen, 2: General, 3: Debug detallado).
+
+---
+
+## 🛠️ Requisitos
+
+* **Extensión:** `dblink` instalada en el esquema `public`.
+* **Permisos:** El usuario que ejecute la función debe tener privilegios de Superusuario o `CREATEROLE` para manipular otros roles y realizar `DROP USER`.
+* **PostgreSQL:** Versión 12 o superior recomendada.
+
+---
+
+## 📖 Modo de Uso
+
+### 1. Instalación
+
+Carga el script en tu base de datos administrativa (usualmente `postgres`).
+
+### 2. Ejecución
+
+La función recibe cuatro parámetros:
+
+1. `p_user_name` (TEXT[]): Array de usuarios a procesar.
+2. `p_db_name` (TEXT[]): Array de bases de datos (Usa `ARRAY[NULL]` para procesar todas).
+3. `p_drop_user_final` (BOOLEAN): `TRUE` para borrar el usuario, `FALSE` para solo quitar permisos.
+4. `p_level_detail` (INTEGER): Nivel de log (1, 2 o 3).
+
+**Ejemplo de Purga Total:**
+
+```sql
+SELECT fn_revoke_user_global(
+    p_user_name       => ARRAY['empleado_v01', 'temp_app_user'],
+    p_db_name         => ARRAY[NULL], 
+    p_drop_user_final => TRUE,
+    p_level_detail    => 3
+);
+
+```
+
+### 3. Ver Reporte de Auditoría
+
+Después de ejecutar, consulta los resultados en la misma sesión:
+
+```sql
+SELECT * FROM audit_report ORDER BY id;
+
+```
+
+ 
+
+## 📊 Estructura del Reporte (`audit_report`)
+
+| Columna | Descripción |
+| --- | --- |
+| `fase` | `VALIDATION_USER`, `DB_CONNECT`, `REVOKE_USER`, `DROP_USER`, `FINAL_VERDICT`. |
+| `status` | `successful` o `failed`. |
+| `exec_cmd` | El comando SQL exacto que se intentó ejecutar. |
+| `msg` | Respuesta directa del motor PostgreSQL (Mensaje de éxito o error detallado). |
+
+---
+
+## 🛡️ Seguridad
+
+La función está definida como `SECURITY DEFINER` y tiene un `search_path` restringido para evitar ataques de búsqueda de esquemas. Se recomienda revocar el permiso de ejecución a `PUBLIC` y otorgarlo solo a roles de administración.
+
+ 
+  
+ 
+ # 🛠  Casos de Prueba Incluidos (Test Matrix)
 Para asegurar que la función no "rompa" nada y se comporte de forma predecible, se ejecutaron los siguientes casos de uso:
 
 #### 1. Gestión de Identidades (Filtro de Usuarios)
