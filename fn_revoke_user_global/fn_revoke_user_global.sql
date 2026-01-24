@@ -131,7 +131,7 @@ BEGIN
         AND (p_db_name IS NULL OR p_db_name = ARRAY[NULL]::TEXT[] OR datname = ANY(p_db_name))
     LOOP
         v_fase_start := clock_timestamp();
-        v_conn_str := format('dbname=%L host=%s port=%s', v_db_current, v_socket, v_port);
+        v_conn_str := format('dbname=%L host=%s port=%s user=postgres', v_db_current, v_socket, v_port);
         
         BEGIN
             -- Log Conexión
