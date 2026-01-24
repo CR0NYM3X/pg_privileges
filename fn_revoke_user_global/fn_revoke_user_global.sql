@@ -3,7 +3,7 @@
 -- grant all privileges on all tables in schema public to jose;
 
 /*
- @Function: admin.fn_revoke_user_global
+ @Function: fn_revoke_user_global
  @Creation Date: 23/01/2026
  @Description: Revocación granular multi-base de datos con ejecución de comandos por lotes 
                y registro detallado por cada sentencia individual.
