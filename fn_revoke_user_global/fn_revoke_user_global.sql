@@ -200,7 +200,7 @@ BEGIN
                     RAISE NOTICE ' -> Eliminación de usuario'; 
                     EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'DROP_USER', 'successful', 'DROP USER', 'Usuario eliminado', v_fase_start);
                     RAISE NOTICE '    [OK] DROP USER %L', v_user_target;
-                    EXECUTE FORMAT(v_insert_table, 'CLUSTER', 'ALL', 'FINAL_VERDICT', 'successful', 'DROP USER', 
+                    EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'FINAL_VERDICT', 'successful', 'DROP USER', 
                     'Proceso completado con ' || v_error_count || ' errores granulares.', v_fase_start);
                 END IF;
 
@@ -208,7 +208,7 @@ BEGIN
             EXCEPTION WHEN OTHERS THEN
                 GET STACKED DIAGNOSTICS ex_msg = MESSAGE_TEXT;
                 EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'DROP_USER', 'failed', 'REVOKE USER + DROP USER', ex_msg, v_fase_start);
-                EXECUTE FORMAT(v_insert_table, 'CLUSTER', 'ALL', 'FINAL_VERDICT', 'failed', 'REVOKE USER + DROP USER', 
+                EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'FINAL_VERDICT', 'failed', 'REVOKE USER + DROP USER', 
                 'Proceso completado con ' || v_error_count || ' errores granulares.', v_fase_start);                
             END;
         END LOOP;
@@ -216,10 +216,10 @@ BEGIN
         -- No se pidió DROP, pero notificamos si los REVOKE fallaron
         IF v_error_count > 0 THEN
             RAISE NOTICE 'ALERTA: Se detectaron % errores en la fase de revocación.', v_error_count;
-            EXECUTE FORMAT(v_insert_table, 'CLUSTER', 'ALL', 'FINAL_VERDICT', 'failed', 'REVOKE USER', 
+            EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'FINAL_VERDICT', 'failed', 'REVOKE USER', 
                            'Proceso completado con ' || v_error_count || ' errores granulares.', v_fase_start);
         ELSE
-            EXECUTE FORMAT(v_insert_table, 'CLUSTER', 'ALL', 'FINAL_VERDICT', 'successful', 'REVOKE USER', 
+            EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'FINAL_VERDICT', 'successful', 'REVOKE USER', 
                            'Revocación completada sin errores detectados.', v_fase_start);
         END IF;        
     END IF;
