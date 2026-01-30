@@ -235,6 +235,8 @@ END;
 $func$;
  
 
+revoke EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) from PUBLIC;
+-- grant EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) to   userpermisos;
 
 
 -- Ejemplo Nivel 3 (Detallado)
