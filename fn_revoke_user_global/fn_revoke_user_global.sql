@@ -20,16 +20,6 @@
 */
 
 
----------------- COMMENT ----------------
-COMMENT ON FUNCTION fn_revoke_user_global(TEXT[], TEXT[], BOOLEAN, INTEGER) IS
-'Suite de seguridad para revocación masiva de accesos.
-- Parámetros: Usuarios, Bases de Datos, Drop final, Nivel Detalle.
-- Retorno: void (Genera tabla temporal audit_report).
-- Volatilidad: VOLATILE.
-- Seguridad: SECURITY DEFINER (requiere permisos de superusuario para dblink y drop role).
-- Notas: Crea extensión dblink si no existe.';
-
-
 -- DROP  FUNCTION fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER); 
 CREATE OR REPLACE FUNCTION fn_revoke_user_global(
     p_user_name        TEXT[],
@@ -264,6 +254,17 @@ $func$;
 
 revoke EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) from PUBLIC;
 -- grant EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) to   userpermisos;
+
+
+
+---------------- COMMENT ----------------
+COMMENT ON FUNCTION fn_revoke_user_global(TEXT[], TEXT[], BOOLEAN, INTEGER) IS
+'Suite de seguridad para revocación masiva de accesos.
+- Parámetros: Usuarios, Bases de Datos, Drop final, Nivel Detalle.
+- Retorno: void (Genera tabla temporal audit_report).
+- Volatilidad: VOLATILE.
+- Seguridad: SECURITY DEFINER (requiere permisos de superusuario para dblink y drop role).
+- Notas: Crea extensión dblink si no existe.';
 
 
 -- Ejemplo Nivel 3 (Detallado)
