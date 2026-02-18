@@ -30,7 +30,6 @@ COMMENT ON FUNCTION fn_revoke_user_global(TEXT[], TEXT[], BOOLEAN, INTEGER) IS
 - Notas: Crea extensión dblink si no existe.';
 
 
-
 -- DROP  FUNCTION fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER); 
 CREATE OR REPLACE FUNCTION fn_revoke_user_global(
     p_user_name        TEXT[],
@@ -38,10 +37,19 @@ CREATE OR REPLACE FUNCTION fn_revoke_user_global(
     p_drop_user_final  BOOLEAN DEFAULT TRUE,
     p_level_detail     INTEGER DEFAULT 2
 )
-RETURNS void
+RETURNS TABLE(
+        db_name     TEXT,
+        user_name   TEXT,
+        fase        TEXT,
+        status      TEXT,
+        exec_cmd    TEXT,
+        msg         TEXT,
+        start_time  TIMESTAMPTZ,
+        end_time    TIMESTAMPTZ 
+    )
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public, pg_catalog, pg_temp'
+SET search_path = 'public , pg_temp , pg_catalog'
 AS $func$
 DECLARE
     -- Variables de Control y Estética
@@ -59,6 +67,7 @@ DECLARE
     v_sql_final     TEXT;
     v_users_valid   TEXT[] := ARRAY[]::TEXT[]; -- Lista de usuarios filtrada
     v_error_count   INTEGER := 0; -- Contador de errores detectados
+	v_flag_extension BOOLEAN := FALSE;
 
     -- Listado Granular de Comandos (Plantillas)
     -- %1$I = Usuario, %2$I = Base de Datos
@@ -95,8 +104,15 @@ BEGIN
     v_fase_start := clock_timestamp();
     FOREACH v_user_target IN ARRAY p_user_name LOOP
         IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = v_user_target) THEN
-            v_users_valid := array_append(v_users_valid, v_user_target);
             
+			IF (v_user_target LIKE '9%') THEN
+				v_users_valid := array_append(v_users_valid, v_user_target);
+			ELSE
+				RAISE NOTICE '[VALIDACIÓN] Usuario no valido encontrado: %', v_user_target;
+                EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'VALIDATION_USER', 'failed', 'CHECK_USER', 'Usuario existente pero no cumple con las especificaciones', v_fase_start);
+			END IF;
+			
+
             IF p_level_detail >= 2 THEN
                 RAISE NOTICE '[VALIDACIÓN] Usuario encontrado: %', v_user_target;
                 EXECUTE FORMAT(v_insert_table, 'CLUSTER', v_user_target, 'VALIDATION_USER', 'successful', 'CHECK_USER', 'Usuario existente y listo para proceso', v_fase_start);
@@ -113,12 +129,15 @@ BEGIN
         RAISE NOTICE 'FINALIZADO: Ninguno de los usuarios proporcionados existe.';
         RAISE NOTICE '---------------------------------------------------';
         EXECUTE FORMAT(v_insert_table, 'CLUSTER', 'N/A', 'FINAL_VERDICT', 'failed', 'ABORT_PROC', 'No hay usuarios válidos para procesar. Proceso abortado.', v_fase_start);
-        RETURN;
+        -- RETURN;
+         RETURN QUERY SELECT a.db_name,a.user_name,a.fase,a.status,a.exec_cmd,a.msg,a.start_time,a.end_time FROM audit_report as a /* where a.fase = 'FINAL_VERDICT'*/ ORDER BY a.id;
+		 RETURN;
     END IF;
 
 
     IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'dblink') THEN
-        CREATE EXTENSION IF NOT EXISTS dblink;
+        CREATE EXTENSION dblink SCHEMA public;
+		v_flag_extension := TRUE;
     END IF;
 
     SELECT replace(setting, ' ', '') INTO v_socket FROM pg_settings WHERE name = 'unix_socket_directories';
@@ -179,15 +198,22 @@ BEGIN
             END LOOP;
 
             PERFORM public.dblink_disconnect('conn_revoke');
+			
+		
 
         EXCEPTION WHEN OTHERS THEN
             GET STACKED DIAGNOSTICS ex_msg = MESSAGE_TEXT;
             EXECUTE FORMAT(v_insert_table, v_db_current, '', 'DB_CONNECT', 'failed', 'CONNECTION', ex_msg, v_fase_start);
             IF public.dblink_get_connections() @> '{conn_revoke}' THEN PERFORM public.dblink_disconnect('conn_revoke'); END IF;
         END;
+
+		IF (v_flag_extension) THEN 
+			DROP EXTENSION dblink;
+		END IF;
+
     END LOOP;
 
-    SELECT COUNT(*) INTO v_error_count FROM audit_report WHERE status = 'failed' AND fase in('DB_CONNECT','REVOKE_USER');
+    SELECT COUNT(*) INTO v_error_count FROM audit_report as b WHERE b.status = 'failed' AND b.fase in('DB_CONNECT','REVOKE_USER');
     v_fase_start := clock_timestamp();
 
     -- 5. FASE FINAL: DROP USER
@@ -230,10 +256,11 @@ BEGIN
         RAISE NOTICE 'PROCESO FINALIZADO. REVISE audit_report PARA DETALLES.';
         RAISE NOTICE '---------------------------------------------------';
     END IF;
-
+     -- INSERT INTO audit_report (db_name, user_name, fase, status, exec_cmd, msg, start_time) VALUES (current_database(), current_user, 'INICIO', 'SUCCESS', 'SELECT * FROM...', 'Proceso completado', now());
+     RETURN QUERY SELECT a.db_name,a.user_name,a.fase,a.status,a.exec_cmd,a.msg,a.start_time,a.end_time FROM audit_report as a /* where a.fase = 'FINAL_VERDICT'*/ ORDER BY a.id;
+	
 END;
 $func$;
- 
 
 revoke EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) from PUBLIC;
 -- grant EXECUTE on function fn_revoke_user_global(TEXT[],TEXT[],BOOLEAN , INTEGER) to   userpermisos;
