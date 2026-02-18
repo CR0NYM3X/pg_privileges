@@ -6,7 +6,7 @@ Esta herramienta es un **motor de revocación granular y purga de identidades** 
 ## 🚀 Características Principales
 
 * **Ejecución Multi-DB:** Conecta automáticamente a todas las bases de datos del cluster (o a una lista específica) para limpiar privilegios.
-* **Granularidad Total:** No solo revoca el acceso a la DB; limpia esquemas, tablas, funciones, secuencias y elimina privilegios por defecto (Default Privileges).
+* **Granularidad Total:** Revoca todos los permisos de cada base de datos.
 * **Validación Previa:** Filtra usuarios inexistentes antes de iniciar el proceso para optimizar recursos.
 * **Resiliencia (Fault Tolerance):** Si un comando falla (ej. un esquema no existe), el script captura la excepción, la loguea y **continúa** con el resto del proceso.
 * **Auditoría Detallada:** Genera una tabla temporal `audit_report` con el estatus de cada comando ejecutado, tiempos de inicio/fin y mensajes de error del motor.
